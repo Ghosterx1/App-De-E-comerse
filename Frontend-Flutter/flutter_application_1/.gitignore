@@ -1,4 +1,7 @@
-# Miscellaneous
+# Frontend Flutter / Dart
+
+# Archivos temporales y logs locales. No incluye los informes Markdown
+# del proyecto: esos documentos son contenido fuente y se versionan.
 *.class
 *.log
 *.pyc
@@ -23,23 +26,33 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Dependencias y metadatos generados por Dart/Flutter Pub.
+# pubspec.yaml y pubspec.lock se conservan para poder reproducir dependencias.
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
+
+# Documentación API generada; doc/api/ no es la documentación fuente del proyecto.
+**/doc/api/
+**/ios/Flutter/.last_build_id
+INFORME-INTEGRACION.md
+
+# Compilados de Flutter para Android, iOS, web y escritorio.
 /build/
+
+# Reportes y datos de cobertura generados al ejecutar pruebas.
 /coverage/
 
-# Symbolication related
+# Archivos de símbolos generados al simbolicar/crashear una compilación.
 app.*.symbols
 
-# Obfuscation related
+# Mapas generados por la ofuscación de una compilación.
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Salidas de compilación Android; los fuentes de android/app permanecen versionados.
 /android/app/debug
 /android/app/profile
 /android/app/release

@@ -1,10 +1,25 @@
-HELP.md
+# Backend Spring Boot / Maven
+
+# Resultado generado por Maven: clases compiladas, JAR empaquetados,
+# reportes de pruebas (Surefire/Failsafe) y documentación de Maven.
 target/
+
+# Maven descarga las dependencias en ~/.m2/repository, fuera del proyecto;
+# no hace falta ignorar fuentes ni archivos de dependencias en src/.
+
+# El wrapper JAR es una herramienta binaria descargable; los scripts
+# mvnw y mvnw.cmd sí se conservan en Git para ejecutar Maven Wrapper.
 .mvn/wrapper/maven-wrapper.jar
+
+# Evita ignorar por accidente carpetas target que formen parte del código fuente.
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Archivos de ayuda generados por Spring Initializr.
+HELP.md
+
+# Archivos temporales y configuración local del IDE.
+*.log
 .apt_generated
 .classpath
 .factorypath
@@ -13,11 +28,12 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# Configuración local de IntelliJ IDEA y VS Code.
 .idea
 *.iws
 *.iml
 *.ipr
+.vscode/
 
 ### NetBeans ###
 /nbproject/private/
@@ -28,6 +44,3 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
-### VS Code ###
-.vscode/
