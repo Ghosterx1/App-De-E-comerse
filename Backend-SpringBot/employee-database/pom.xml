@@ -39,6 +39,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!-- Spring Mail para envío de correos de recuperación de contraseña -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		<!-- JWT: API, implementación y serialización Jackson -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

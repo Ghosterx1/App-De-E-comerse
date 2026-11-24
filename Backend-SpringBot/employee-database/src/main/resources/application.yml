@@ -14,6 +14,17 @@ spring:
       ddl-auto: validate
   jackson:
     default-property-inclusion: non_null
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
 
 # Orígenes permitidos por CORS (en producción: la URL real del frontend).
 app:
@@ -24,6 +35,11 @@ app:
   jwt:
     secret: ${JWT_SECRET:c2VjcmV0LWtleS1wYXJhLWNlbWJpYW4tbWlhbWVyYW50LXNlY3JldC0wMjAyNg==}
     expiration: ${JWT_EXPIRATION:86400000}
+
+  # Configuración de correo para restablecimiento de contraseña.
+  # En desarrollo, si no hay SMTP, el servicio escribe el correo en los logs.
+  mail:
+    from: ${MAIL_FROM:noreply@ecommerce.local}
 
 # Actuator: /actuator/health sirve para comprobar que el backend y la BD responden.
 management:

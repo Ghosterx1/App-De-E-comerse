@@ -9,6 +9,8 @@ import 'features/cart/presentation/state/cart_controller.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
 import 'features/catalog/domain/repositories/product_repository.dart';
 import 'features/catalog/presentation/pages/catalog_page.dart';
+import 'features/checkout/presentation/pages/checkout_page.dart';
+import 'features/checkout/presentation/pages/order_confirmation_page.dart';
 import 'features/employees/domain/entities/employee.dart';
 import 'features/employees/presentation/pages/employee_form_page.dart';
 import 'features/employees/presentation/pages/employee_list_page.dart';
@@ -89,6 +91,31 @@ class EcommerceApp extends StatelessWidget {
           settings: settings,
           builder: (_) => CartPage(controller: cartController),
         );
+      case AppRoutes.checkout:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => CheckoutPage(
+            controller: cartController,
+          ),
+        );
+      case AppRoutes.orderConfirmation:
+        final arguments = settings.arguments;
+        final orderArgs = arguments is OrderConfirmationArguments
+            ? arguments
+            : null;
+        if (orderArgs == null) {
+          return MaterialPageRoute<void>(
+            builder: (_) => HomePage(
+              controller: homeController,
+              authController: authController,
+              cartController: cartController,
+            ),
+          );
+        }
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => OrderConfirmationPage(arguments: orderArgs),
+        );
       case AppRoutes.employees:
         return MaterialPageRoute<void>(
           settings: settings,
@@ -131,8 +158,11 @@ class EcommerceApp extends StatelessWidget {
     // Fallback: una ruta desconocida vuelve al inicio en lugar de romper.
     return MaterialPageRoute<void>(
       settings: settings,
-      builder: (_) =>
-          HomePage(controller: homeController, authController: authController, cartController: cartController),
+      builder: (_) => HomePage(
+        controller: homeController,
+        authController: authController,
+        cartController: cartController,
+      ),
     );
   }
 }

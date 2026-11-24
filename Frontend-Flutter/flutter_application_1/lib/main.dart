@@ -17,20 +17,21 @@ import 'features/employees/data/repositories/employee_repository_impl.dart';
 import 'features/employees/domain/repositories/employee_repository.dart';
 import 'features/employees/presentation/state/employee_controller.dart';
 import 'features/home/presentation/state/home_controller.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final config = AppConfig.fromEnvironment();
-  final authController = buildAuthController();
+  final apiClient = buildApiClient(config: config);
+  final authController = buildAuthController(apiClient: apiClient);
+  // El cliente HTTP consulta el token en cada petición y notifica los 401 al
+  // controlador para cerrar la sesión local sin reconstruir dependencias.
+  apiClient
+    ..tokenProvider = (() => authController.token)
+    ..onUnauthorized = authController.expireSession;
   // Antes de montar la UI se recupera la sesión persistida, para que el primer
   // frame ya conozca si hay un usuario autenticado.
   await authController.initialize();
 
-  final apiClient = buildApiClient(
-    config: config,
-    authController: authController,
-  );
   final employeeController = buildEmployeeController(
     config: config,
     apiClient: apiClient,
@@ -53,32 +54,33 @@ Future<void> main() async {
 
 /// Punto único de composición de la autenticación.
 ///
-/// `PendingAuthRemoteDataSource` es el adaptador provisional mientras el
-/// backend no exponga endpoints de autenticación. Cuando exista el contrato
-/// real, solo se reemplaza aquí por el adaptador HTTP correspondiente.
+/// Con [apiClient] se usa el adaptador HTTP real contra `/api/v1/auth`; sin él
+/// se conserva el adaptador pendiente para pruebas o demos sin backend.
 AuthController buildAuthController({
   AuthRemoteDataSource? remoteDataSource,
   TokenStorage? tokenStorage,
+  ApiClient? apiClient,
 }) {
+  final effectiveRemoteDataSource =
+      remoteDataSource ??
+      (apiClient == null
+          ? const PendingAuthRemoteDataSource()
+          : HttpAuthRemoteDataSource(apiClient));
   final repository = AuthRepositoryImpl(
-    remoteDataSource: remoteDataSource ?? const PendingAuthRemoteDataSource(),
+    remoteDataSource: effectiveRemoteDataSource,
     tokenStorage: tokenStorage ?? SecureTokenStorage(),
   );
   return AuthController(repository);
 }
 
-/// Cliente HTTP compartido: inyecta el JWT en cada petición y notifica los 401
-/// al controlador de autenticación para cerrar la sesión local.
-ApiClient buildApiClient({
-  required AppConfig config,
-  required AuthController authController,
-}) {
-  return ApiClient(
-    baseUrl: config.apiBaseUrl,
-    timeout: config.requestTimeout,
-    tokenProvider: () => authController.token,
-    onUnauthorized: authController.expireSession,
-  );
+/// Cliente HTTP compartido por todos los repositorios.
+///
+/// Los callbacks de sesión se asignan en `main` después de crear el
+/// [AuthController], porque ambos dependen entre sí. El cliente consulta el
+/// token de forma dinámica, así que iniciar o cerrar sesión no requiere crear
+/// una instancia nueva.
+ApiClient buildApiClient({required AppConfig config}) {
+  return ApiClient(baseUrl: config.apiBaseUrl, timeout: config.requestTimeout);
 }
 
 /// Punto único de composición de dependencias (inyección manual).
@@ -107,3 +109,5 @@ EmployeeController buildEmployeeController({
 ProductRepository buildProductRepository({required ApiClient apiClient}) {
   return ProductRepositoryImpl(ProductRemoteDataSource(apiClient));
 }
+
+
