@@ -11,10 +11,17 @@ import '../../../cart/presentation/state/cart_controller.dart';
 /// Muestra el resumen del pedido y un formulario de pago de referencia.
 /// No se procesa ningún pago real ni se envían datos de tarjeta a servidor.
 /// El estado del carrito se mantiene en memoria y se vacía tras la compra.
-class CheckoutPage extends StatelessWidget {
+class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key, required this.controller});
 
   final CartController controller;
+
+  @override
+  State<CheckoutPage> createState() => _CheckoutPageState();
+}
+
+class _CheckoutPageState extends State<CheckoutPage> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +30,9 @@ class CheckoutPage extends StatelessWidget {
         title: const Text('Finalizar compra'),
       ),
       body: ListenableBuilder(
-        listenable: controller,
+        listenable: widget.controller,
         builder: (context, _) {
-          if (controller.isEmpty) {
+          if (widget.controller.isEmpty) {
             return const Center(
               child: Text('Tu carrito está vacío.'),
             );
@@ -38,18 +45,18 @@ class CheckoutPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   children: [
                     _OrderSummary(
-                      items: controller.items.length,
-                      totalItems: controller.totalItems,
-                      subtotal: controller.subtotal,
-                      total: controller.total,
+                      items: widget.controller.items.length,
+                      totalItems: widget.controller.totalItems,
+                      subtotal: widget.controller.subtotal,
+                      total: widget.controller.total,
                     ),
                     const SizedBox(height: 24),
-                    const _PaymentForm(),
+                    _PaymentForm(formKey: _formKey),
                   ],
                 ),
               ),
               _CheckoutButtonBar(
-                total: controller.total,
+                total: widget.controller.total,
                 onPay: () => _processPurchase(context),
               ),
             ],
@@ -60,6 +67,15 @@ class CheckoutPage extends StatelessWidget {
   }
 
   Future<void> _processPurchase(BuildContext context) async {
+    // Validar que todos los campos del formulario sean correctos
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      AppSnackBar.showError(
+        context,
+        'Por favor completa todos los campos correctamente antes de continuar.',
+      );
+      return;
+    }
+
     // Simular tiempo de procesamiento de pago
     showDialog(
       context: context,
@@ -81,14 +97,14 @@ class CheckoutPage extends StatelessWidget {
       AppRoutes.orderConfirmation,
       arguments: OrderConfirmationArguments(
         orderId: orderId,
-        total: controller.total,
-        items: controller.items.length,
+        total: widget.controller.total,
+        items: widget.controller.items.length,
         date: DateTime.now(),
       ),
     );
 
     // Vaciar carrito tras navegar a confirmación
-    controller.clearCart();
+    widget.controller.clearCart();
     if (context.mounted) {
       AppSnackBar.showSuccess(context, 'Compra realizada con éxito.');
     }
@@ -147,14 +163,15 @@ class _OrderSummary extends StatelessWidget {
 
 /// Formulario de pago de referencia (sin envío de datos reales).
 class _PaymentForm extends StatefulWidget {
-  const _PaymentForm();
+  const _PaymentForm({required this.formKey});
+
+  final GlobalKey<FormState> formKey;
 
   @override
   State<_PaymentForm> createState() => _PaymentFormState();
 }
 
 class _PaymentFormState extends State<_PaymentForm> {
-  final _formKey = GlobalKey<FormState>();
   final _cardNumberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
@@ -185,7 +202,7 @@ class _PaymentFormState extends State<_PaymentForm> {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Form(
-          key: _formKey,
+          key: widget.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
