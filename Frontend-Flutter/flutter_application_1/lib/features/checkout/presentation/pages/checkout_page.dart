@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/routing/app_routes.dart';
@@ -203,11 +204,14 @@ class _PaymentFormState extends State<_PaymentForm> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu correo electrónico.';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El correo electrónico es obligatorio.';
                   }
-                  if (!value.contains('@')) {
-                    return 'Correo inválido.';
+                  final emailRegExp = RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  );
+                  if (!emailRegExp.hasMatch(value.trim())) {
+                    return 'Ingresa un correo electrónico válido.';
                   }
                   return null;
                 },
@@ -220,13 +224,17 @@ class _PaymentFormState extends State<_PaymentForm> {
                   prefixIcon: Icon(Icons.credit_card_outlined),
                 ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
                 maxLength: 16,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa el número de tarjeta.';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El número de tarjeta es obligatorio.';
                   }
-                  if (value.replaceAll(' ', '').length < 13) {
-                    return 'Número de tarjeta inválido.';
+                  final digits = value.replaceAll(' ', '');
+                  if (digits.length != 16) {
+                    return 'El número de tarjeta debe tener 16 dígitos.';
                   }
                   return null;
                 },
@@ -240,11 +248,22 @@ class _PaymentFormState extends State<_PaymentForm> {
                       decoration: const InputDecoration(
                         labelText: 'Vencimiento (MM/AA)',
                         prefixIcon: Icon(Icons.event_outlined),
+                        hintText: 'MM/AA',
                       ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+                        ExpiryDateFormatter(),
+                      ],
                       maxLength: 5,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa la fecha de vencimiento.';
+                        if (value == null || value.trim().isEmpty) {
+                          return 'La fecha de vencimiento es obligatoria.';
+                        }
+                        final expiryRegExp =
+                            RegExp(r'^(0[1-9]|1[0-2])\/[0-9]{2}$');
+                        if (!expiryRegExp.hasMatch(value.trim())) {
+                          return 'Ingresa una fecha válida en formato MM/AA.';
                         }
                         return null;
                       },
@@ -258,11 +277,17 @@ class _PaymentFormState extends State<_PaymentForm> {
                         labelText: 'CVV',
                         prefixIcon: Icon(Icons.lock_outline),
                       ),
-                      maxLength: 3,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      maxLength: 3,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa el CVV.';
+                        if (value == null || value.trim().isEmpty) {
+                          return 'El CVV es obligatorio.';
+                        }
+                        if (value.trim().length != 3) {
+                          return 'El CVV debe tener 3 dígitos.';
                         }
                         return null;
                       },
@@ -277,9 +302,20 @@ class _PaymentFormState extends State<_PaymentForm> {
                   labelText: 'Nombre en la tarjeta',
                   prefixIcon: Icon(Icons.person_outlined),
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                    RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]'),
+                  ),
+                ],
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa el nombre.';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El nombre es obligatorio.';
+                  }
+                  final nameRegExp = RegExp(
+                    r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$',
+                  );
+                  if (!nameRegExp.hasMatch(value.trim())) {
+                    return 'Ingresa solo letras y espacios.';
                   }
                   return null;
                 },
@@ -398,4 +434,36 @@ class OrderConfirmationArguments {
   final double total;
   final int items;
   final DateTime date;
+}
+
+/// Formateador de fecha de vencimiento MM/AA.
+/// Inserta automáticamente la barra después de los primeros dos dígitos.
+class ExpiryDateFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll('/', '');
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    if (text.length == 1) {
+      return newValue.copyWith(text: text);
+    }
+
+    if (text.length >= 2) {
+      final formatted = '${text.substring(0, 2)}/${text.substring(2)}';
+      return newValue.copyWith(
+        text: formatted.length > 5 ? formatted.substring(0, 5) : formatted,
+        selection: TextSelection.collapsed(
+          offset: formatted.length > 5 ? 5 : formatted.length,
+        ),
+      );
+    }
+
+    return newValue;
+  }
 }
